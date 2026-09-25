@@ -15,4 +15,5 @@ abstract final class UiTokens {
   /// Minimum interactive control height; never a total field height.
   static const double controlMinHeight = 48;
 }
+
 class UiButton {}

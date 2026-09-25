@@ -74,4 +74,24 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('workbench renders all Phase 05 field primitives cleanly', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1920, 1800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const FoundationWorkbench());
+    await tester.pumpAndSettle();
+
+    expect(find.byType(UiTextField), findsWidgets);
+    expect(find.byType(UiNumberField), findsOneWidget);
+    expect(find.byType(UiSelectField<String>), findsOneWidget);
+    expect(find.byType(UiMultiSelectField<String>), findsOneWidget);
+    expect(find.byType(UiAutocompleteField), findsOneWidget);
+    expect(find.byType(UiDateField), findsOneWidget);
+    expect(find.byType(UiDateRangeField), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

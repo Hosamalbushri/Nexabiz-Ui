@@ -84,9 +84,22 @@ void main() {
       "export 'src/foundation/tokens.dart' show UiTokens;",
       "export 'src/foundation/typography.dart' show UiTextRole;",
       "export 'src/foundation/responsive.dart' show UiLayoutTier, UiResponsive;",
+      "export 'src/composition/content.dart' show UiContent;",
+      "export 'src/composition/section.dart' show UiSection;",
+      "export 'src/composition/action_group.dart' show UiActionGroup;",
+      "export 'src/composition/empty_state.dart' show UiEmptyState;",
+      "export 'src/composition/error_state.dart' show UiErrorState;",
       "export 'src/fields/field_shell.dart' show UiFieldShell;",
       "export 'src/fields/text_field.dart' show UiTextField;",
+      "export 'src/fields/number_field.dart' show UiNumberField;",
+      "export 'src/fields/select_field.dart' show UiSelectField;",
+      "export 'src/fields/multi_select_field.dart' show UiMultiSelectField;",
+      "export 'src/fields/autocomplete_field.dart' show UiAutocompleteField;",
+      "export 'src/fields/date_field.dart' show UiDateField;",
+      "export 'src/fields/date_range_field.dart' show UiDateRangeField;",
       "export 'src/forms/form_layout.dart' show UiFormLayout;",
+      "export 'src/forms/form_span.dart' show UiFormSpan, UiFormSpanType;",
+      "export 'src/interaction/confirmation_dialog.dart' show showUiConfirmationDialog;",
     };
     final text = File('${package.path}/lib/nexabiz_ui.dart').readAsStringSync();
     final actual = RegExp(r'export\s+[^;]+;')
@@ -171,4 +184,157 @@ void main() {
       reason: 'G7 competing visual authority or viewport/text scaling bypass',
     );
   });
+
+  test(
+    'G8 rename-only visual wrappers and application page templates prohibited',
+    () {
+      final violations = <String>[];
+      for (final file in dartFiles(Directory('${package.path}/lib'))) {
+        final source = file.readAsStringSync();
+        // Check for forbidden page template signatures or rename-only wrappers
+        if (source.contains('class UiPage') ||
+            source.contains('class UiScaffold') ||
+            source.contains('class UiScreen')) {
+          violations.add(file.path);
+        }
+      }
+      expect(
+        violations,
+        isEmpty,
+        reason:
+            'G8 prohibited application page templates or rename-only wrappers',
+      );
+    },
+  );
+
+  test('G9 IntrinsicWidth and IntrinsicHeight prohibited in package lib', () {
+    final violations = <String>[];
+    for (final file in dartFiles(Directory('${package.path}/lib'))) {
+      final source = file.readAsStringSync();
+      if (source.contains('IntrinsicWidth') ||
+          source.contains('IntrinsicHeight')) {
+        violations.add(file.path);
+      }
+    }
+    expect(
+      violations,
+      isEmpty,
+      reason: 'G9 prohibited IntrinsicWidth/IntrinsicHeight layout passes',
+    );
+  });
+
+  test(
+    'G10 FormState ownership and GlobalKey<FormState> prohibited in lib',
+    () {
+      final violations = <String>[];
+      for (final file in dartFiles(Directory('${package.path}/lib'))) {
+        final source = file.readAsStringSync();
+        if (source.contains('FormState') ||
+            source.contains('GlobalKey<FormState>') ||
+            source.contains('UiValidationEngine')) {
+          violations.add(file.path);
+        }
+      }
+      expect(
+        violations,
+        isEmpty,
+        reason: 'G10 foundation must not own FormState or validation engines',
+      );
+    },
+  );
+
+  test(
+    'G11 scroll widgets prohibited inside form primitives (lib/src/forms)',
+    () {
+      final violations = <String>[];
+      final formsDir = Directory('${package.path}/lib/src/forms');
+      for (final file in dartFiles(formsDir)) {
+        final source = file.readAsStringSync();
+        if (source.contains('SingleChildScrollView') ||
+            source.contains('ListView') ||
+            source.contains('CustomScrollView') ||
+            source.contains('ScrollController')) {
+          violations.add(file.path);
+        }
+      }
+      expect(
+        violations,
+        isEmpty,
+        reason: 'G11 form layout primitives must not own scrolling',
+      );
+    },
+  );
+
+  test('G12 top-level Expanded prohibited in form layout primitives', () {
+    final violations = <String>[];
+    final formsDir = Directory('${package.path}/lib/src/forms');
+    for (final file in dartFiles(formsDir)) {
+      final source = file.readAsStringSync();
+      if (source.contains('Expanded(')) {
+        violations.add(file.path);
+      }
+    }
+    expect(
+      violations,
+      isEmpty,
+      reason:
+          'G12 top-level Expanded breaks unconstrained/scrollable form hosts',
+    );
+  });
+
+  test(
+    'G13 source-level guard: global focus hacks, stored context, and global singletons prohibited in lib/src',
+    () {
+      final violations = <String>[];
+      for (final file in dartFiles(Directory('${package.path}/lib/src'))) {
+        final source = file.readAsStringSync();
+        if (source.contains('FocusManager.instance.primaryFocus') ||
+            source.contains('GlobalKey<NavigatorState>') ||
+            source.contains('static BuildContext') ||
+            source.contains('static late BuildContext')) {
+          violations.add(file.path);
+        }
+      }
+      expect(
+        violations,
+        isEmpty,
+        reason:
+            'G13 prohibits global focus hacks, stored static contexts, or static navigator singletons',
+      );
+    },
+  );
+
+  test(
+    'G14 source-level guard: generic page framework symbols prohibited in lib/src',
+    () {
+      final violations = <String>[];
+      final forbiddenSymbols = [
+        'class UiPage',
+        'class UiFormPage',
+        'class UiListPage',
+        'class UiDetailsPage',
+        'class UiTablePage',
+        'class UiDashboardPage',
+        'class UiSettingsPage',
+        'class UiMasterDetailPage',
+        'class UiPageHeader',
+        'class UiPageBody',
+        'class UiPageActions',
+      ];
+      for (final file in dartFiles(Directory('${package.path}/lib/src'))) {
+        final source = file.readAsStringSync();
+        for (final symbol in forbiddenSymbols) {
+          if (source.contains(symbol)) {
+            violations.add('${file.path}: $symbol');
+          }
+        }
+      }
+      expect(
+        violations,
+        isEmpty,
+        reason:
+            'G14 prohibits declaring generic page template wrappers in generic ui package',
+      );
+    },
+  );
 }

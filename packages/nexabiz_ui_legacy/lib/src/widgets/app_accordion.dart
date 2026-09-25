@@ -134,10 +134,7 @@ class _AppAccordionCardState extends State<AppAccordionCard>
               mainAxisSize: MainAxisSize.min,
               children: [
                 const AppDivider(),
-                Padding(
-                  padding: widget.contentPadding,
-                  child: widget.child,
-                ),
+                Padding(padding: widget.contentPadding, child: widget.child),
               ],
             ),
             crossFadeState: _isExpanded

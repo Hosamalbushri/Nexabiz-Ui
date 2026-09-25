@@ -4,11 +4,15 @@ import 'package:flutter/widgets.dart';
 
 import '../foundation/tokens.dart';
 import '../foundation/typography.dart';
+import 'form_span.dart';
 
-/// Content-driven columns; owns neither validation, scrolling nor actions.
+/// Content-driven multi-column layout for form fields and controls.
 ///
-/// Place inside a bounded-width host. Unbounded height is supported, including
-/// a caller-owned scroll view. Large text increases the minimum column width.
+/// Features local-constraint responsiveness, dynamic column reduction under
+/// large text scale, top-aligned child geometry, and support for [UiFormSpan]
+/// field span requests (`normal`, `wide`, `full`).
+///
+/// Owns neither validation rules, scrolling, navigation, nor form state.
 class UiFormLayout extends StatelessWidget {
   const UiFormLayout({super.key, required this.children, this.maxColumns = 2})
     : assert(maxColumns > 0);
@@ -37,17 +41,57 @@ class UiFormLayout extends StatelessWidget {
               .floor(),
         ),
       );
-      final width = math.max(
+      final singleColumnWidth = math.max(
         0.0,
         (constraints.maxWidth - UiTokens.contentGap * (columns - 1)) / columns,
       );
+
       return Wrap(
         spacing: UiTokens.contentGap,
         runSpacing: UiTokens.contentGap,
+        crossAxisAlignment: WrapCrossAlignment.start,
         children: [
-          for (final child in children) SizedBox(width: width, child: child),
+          for (final child in children) ...[
+            _buildChild(
+              child,
+              columns: columns,
+              singleColumnWidth: singleColumnWidth,
+              maxWidth: constraints.maxWidth,
+            ),
+          ],
         ],
       );
     },
   );
+
+  Widget _buildChild(
+    Widget child, {
+    required int columns,
+    required double singleColumnWidth,
+    required double maxWidth,
+  }) {
+    UiFormSpanType span = UiFormSpanType.normal;
+    if (child is UiFormSpan) {
+      span = child.span;
+    }
+
+    if (columns == 1 || span == UiFormSpanType.normal) {
+      return SizedBox(width: singleColumnWidth, child: child);
+    }
+
+    if (span == UiFormSpanType.full) {
+      return SizedBox(width: maxWidth, child: child);
+    }
+
+    // span == UiFormSpanType.wide
+    if (columns == 2) {
+      return SizedBox(width: maxWidth, child: child);
+    }
+
+    final wideWidth = math.min(
+      maxWidth,
+      singleColumnWidth * 2 + UiTokens.contentGap,
+    );
+    return SizedBox(width: wideWidth, child: child);
+  }
 }

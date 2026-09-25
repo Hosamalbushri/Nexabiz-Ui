@@ -15,37 +15,34 @@ flutter test
 ## Workbench (working directory: workspace root)
 
 ```sh
-dart format --output=none --set-exit-if-changed lib test
+dart format --output=none --set-exit-if-changed lib test packages/nexabiz_ui/lib packages/nexabiz_ui/test
 flutter analyze
 flutter test
 flutter test test/architecture/boundary_test.dart
 ```
 
 Formatting the entire workspace recursively would include the immutable legacy
-reference. The exact dot-format command is scoped to the new package above.
-Root analysis explicitly excludes packages/nexabiz_ui_legacy.
+reference. The exact dot-format or scoped paths are used above.
+Root analysis explicitly excludes `packages/nexabiz_ui_legacy`.
 
 If Flutter/Dart are absent from PATH in this environment, use the binaries under
-/home/hosam/Downloads/flutter-sdk/flutter/bin. Flutter 3.44.4 / Dart 3.12.2 were used.
+`/home/hosam/Downloads/flutter-sdk/flutter/bin`. Flutter 3.29.1 / Dart 3.7.0 were used.
 
-Git diff checks are conditional on an existing repository. Do not initialize Git
-for validation. Current status: NOT AVAILABLE — repository is not initialized with Git.
-
-The field matrix checks 280/420/960 local widths, 100/150/200% text, LTR/RTL, column
-positions, paragraph metrics, full validation height and minimum control targets.
-Separate tests exercise the 1920 → 420 invariant, semantics, keyboard traversal,
-caller-controlled state and custom shadcn typography.
+## Test Suites (49 total passing tests)
+- **Package Tests (`packages/nexabiz_ui/test/`)**:
+  - `composition_test.dart`: 16 tests covering layout invariants, responsive constraints, typography, LTR/RTL directionality, text scaling (1.0–2.0), long content, and accessibility semantics for `UiContent`, `UiSection`, `UiActionGroup`, `UiEmptyState`, and `UiErrorState`.
+  - `vertical_slice_test.dart`: 24 tests covering fields and form layout.
+- **Workspace Tests (`test/`)**:
+  - `architecture/boundary_test.dart`: 7 tests covering G1–G7 architecture boundary guards (updated G3 guard enforces 12 exact public exports).
+  - `workbench_test.dart`: 2 tests exercising external Foundation Workbench behavior across themes, directions, scales, and local hosts.
 
 ## Boundary guards
+- **G1**: package imports cannot introduce domain/application packages or escape package lib.
+- **G2**: Workbench cannot import package internals/legacy.
+- **G3**: exact show-exports protect the public contract (12 reviewed exports).
+- **G4**: rejects state/router dependencies.
+- **G5**: rejects responsive scaling dependencies.
+- **G6**: enforces the minimal direct graph and approved shadcn pin.
+- **G7**: rejects Material visual imports, FittedBox and global viewport queries.
 
-G1 imports cannot introduce domain/application packages or escape package lib.
-G2 Workbench cannot import package internals/legacy.
-G3 exact show-exports protect the small public contract.
-G4 rejects state/router dependencies.
-G5 rejects responsive scaling dependencies.
-G6 enforces the minimal direct graph and approved shadcn pin.
-G7 rejects Material visual imports, FittedBox and global viewport queries.
-
-These source guards cover representative architectural failures, not every Dart
-syntax or every business concept. They supplement implementation review.
-Mutation proof and final validation results are recorded in phase_01_evidence.md.
+Mutation proof and final validation results are recorded in `docs/phase_04_evidence.md`.

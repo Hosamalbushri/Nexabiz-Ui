@@ -5,7 +5,7 @@ import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 import '../foundation/typography.dart';
 import 'field_shell.dart';
 
-/// A single-line shadcn input with the shared accessible field contract.
+/// A single-line or multi-line shadcn input with the shared accessible field contract.
 ///
 /// The caller owns and disposes [controller] and any supplied [focusNode].
 /// Validation is controlled: the caller calculates [error] on change or submit.
@@ -25,6 +25,11 @@ class UiTextField extends StatelessWidget {
     this.onSubmitted,
     this.enabled = true,
     this.readOnly = false,
+    this.obscureText = false,
+    this.minLines,
+    this.maxLines = 1,
+    this.keyboardType,
+    this.inputFormatters,
     this.textInputAction = TextInputAction.next,
   });
 
@@ -40,6 +45,11 @@ class UiTextField extends StatelessWidget {
   final ValueChanged<String>? onSubmitted;
   final bool enabled;
   final bool readOnly;
+  final bool obscureText;
+  final int? minLines;
+  final int? maxLines;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
   final TextInputAction textInputAction;
 
   @override
@@ -58,6 +68,11 @@ class UiTextField extends StatelessWidget {
       onSubmitted: onSubmitted,
       enabled: enabled,
       readOnly: readOnly,
+      obscureText: obscureText,
+      minLines: minLines,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       textInputAction: textInputAction,
       style: UiTextRole.body.resolve(context),
       placeholder: placeholder == null ? null : Text(placeholder!),

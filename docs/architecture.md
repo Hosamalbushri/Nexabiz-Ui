@@ -1,33 +1,50 @@
-# Phase 01 architecture
+# NexaBiz UI Foundation Architecture
 
-The root application is the Foundation Workbench. It consumes the new package
-through its public entrypoint and uses shadcn directly for application setup and
-standard controls.
+The root application is the Foundation Workbench (`lib/main.dart`). It consumes the `nexabiz_ui` package through its public entrypoint and uses `shadcn_flutter` directly for application setup and standard controls.
 
 ```text
-lib/main.dart                       external Workbench consumer
+lib/main.dart                       external Workbench consumer & Page Composition Lab
 packages/nexabiz_ui/lib/
-  nexabiz_ui.dart                   reviewed public contracts
+  nexabiz_ui.dart                   reviewed public contracts (21 exported symbols)
   src/foundation/                   tokens, typography, local responsiveness
-  src/fields/                       field shell and one text input
-  src/forms/                        content-driven column composition
-packages/nexabiz_ui_legacy/         immutable reference, excluded from analysis
-test/architecture/                 workspace boundary guards
-packages/nexabiz_ui/test/           package behavior tests
+  src/composition/                  bounded content, sections, action groups, empty & error states
+  src/fields/                       field shell, text, number, select, multi-select, autocomplete, date, date range
+  src/forms/                        form layout and span specifications
+  src/interaction/                  confirmation dialog contract
+packages/nexabiz_ui_legacy/         immutable reference, excluded from active workspace tooling
+test/architecture/                 workspace boundary guards G1–G14
+packages/nexabiz_ui/test/           package behavior, field, form, overlay, and page composition tests
 ```
 
-Dependencies flow from forms/fields to foundation and from these layers to Flutter
-and shadcn_flutter 0.0.53. No new code imports legacy code. There is no theme
-controller, root-app wrapper, application state provider, router or domain model.
+## Layer Structure
 
-The original package had no root application consumers, pubspec path dependency
-or IDE/Workbench references before relocation. It was renamed as one directory
-on the same filesystem. All 529 files, including generated files, were preserved.
-The aggregate SHA-256 of sorted relative paths and file contents before and after:
-`be3854dd20eb588ed8da04fdde11bb640e51e74183483fc5e39d76f9f6c5174e`.
-Its internal package name remains unchanged. Its old generated package mappings
-and path-sensitive tests are reference artifacts, not active workspace tooling.
-Do not run dependency resolution, formatters or tests inside the legacy directory.
+```text
+shadcn_flutter (0.0.53)
+       ↓
+Foundation (Tokens, Typography, Responsive, Accessibility)
+       ↓
+Core Composition (UiContent, UiSection, UiActionGroup, UiEmptyState, UiErrorState)
+       ↓
+Fields & Forms (UiFieldShell, UiTextField, UiFormLayout, UiFormSpan, Field Suite)
+       ↓
+Interaction Contracts (showUiConfirmationDialog)
+       ↓
+Application Host Layer (Scaffold, AppBar, Router, Page Composition via Primitives)
+```
 
-Future work: additional field families, selection, pages, navigation, overlays,
-tables and trees require separate phase approval.
+## Definitive Dependency Law
+
+```text
+Consumer / Application
+        ↓
+    nexabiz_ui
+        ↓
+ shadcn_flutter (0.0.53)
+        ↓
+     Flutter
+```
+
+Consumer applications MUST NOT depend on `shadcn_flutter` UI APIs directly for supported design-system components. `nexabiz_ui` acts as the single UI design-system API surface for application developers, internally using `shadcn_flutter 0.0.53` as its visual implementation engine.
+
+Public exports are strictly governed by G1–G14 architecture boundary guards.
+

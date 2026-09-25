@@ -18,7 +18,7 @@ Prohibited:
 Use the active shadcn theme, inherited Directionality and TextScaler, local
 constraints and caller-owned strings. Controllers and validation belong to the
 caller; layout owns neither scrolling nor actions. Public exports use explicit
-show lists. Do not add a second form engine without revisiting the contract.
+show lists. Do not add a second form engine or composition layer without revisiting the contract.
 
 Maintain behavior tests and architecture guards. Mutation-test new critical
 guards with an actual temporary source/config violation, confirm the intended
@@ -26,4 +26,13 @@ failure, restore the source, and confirm the baseline passes.
 
 Run tests from the canonical locations in testing.md. Never repair, format or
 resolve dependencies inside the legacy reference as part of new package work.
-Stop after Phase 01; Phase 02 requires explicit user approval.
+
+Mandatory Encapsulation Rule:
+APPLICATION CODE MUST NOT IMPORT shadcn_flutter FOR UI COMPONENTS.
+Before using a shadcn component in application code:
+1. inspect nexabiz_ui;
+2. inspect the encapsulation matrix;
+3. if the capability is not exposed, do not bypass nexabiz_ui;
+4. classify the missing capability;
+5. extend nexabiz_ui only through an approved architecture phase.
+
