@@ -1,0 +1,18 @@
+name: nexabiz_ui_foundation
+description: Development workbench for the reusable UI foundation.
+publish_to: none
+version: 1.0.0+1
+environment:
+  sdk: ^3.12.2
+dependencies:
+  flutter:
+    sdk: flutter
+  nexabiz_ui:
+    path: packages/nexabiz_ui
+  shadcn_flutter: 0.0.53
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+flutter:
+  uses-material-design: true
