@@ -4,13 +4,14 @@ import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 
 import '../foundation/typography.dart';
 import 'field_shell.dart';
+import 'text_controller_bridge.dart';
 
 /// A single-line or multi-line shadcn input with the shared accessible field contract.
 ///
 /// The caller owns and disposes [controller] and any supplied [focusNode].
 /// Validation is controlled: the caller calculates [error] on change or submit.
 /// There is no second form engine or implicit required-value validator.
-class UiTextField extends StatelessWidget {
+class UiTextField extends StatefulWidget {
   const UiTextField({
     super.key,
     required this.label,
@@ -53,29 +54,67 @@ class UiTextField extends StatelessWidget {
   final TextInputAction textInputAction;
 
   @override
+  State<UiTextField> createState() => _UiTextFieldState();
+}
+
+class _UiTextFieldState extends State<UiTextField> {
+  late final FieldTextControllerBridge _bridge;
+  late String _lastNotifiedText;
+
+  @override
+  void initState() {
+    super.initState();
+    _bridge = FieldTextControllerBridge(widget.controller);
+    _lastNotifiedText = widget.controller.text;
+  }
+
+  @override
+  void didUpdateWidget(UiTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      _lastNotifiedText = widget.controller.text;
+      _bridge.replaceSource(widget.controller);
+    }
+  }
+
+  @override
+  void dispose() {
+    _bridge.dispose();
+    super.dispose();
+  }
+
+  void _onChanged(String text) {
+    if (_lastNotifiedText == text) return;
+    _lastNotifiedText = text;
+    widget.onChanged?.call(text);
+  }
+
+  @override
   Widget build(BuildContext context) => UiFieldShell(
-    label: label,
-    requiredIndicator: requiredIndicator,
-    description: description,
-    helper: helper,
-    error: error,
-    enabled: enabled,
-    readOnly: readOnly,
+    label: widget.label,
+    requiredIndicator: widget.requiredIndicator,
+    description: widget.description,
+    helper: widget.helper,
+    error: widget.error,
+    enabled: widget.enabled,
+    readOnly: widget.readOnly,
     control: shadcn.TextField(
-      controller: controller,
-      focusNode: focusNode,
-      onChanged: onChanged,
-      onSubmitted: onSubmitted,
-      enabled: enabled,
-      readOnly: readOnly,
-      obscureText: obscureText,
-      minLines: minLines,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      inputFormatters: inputFormatters,
-      textInputAction: textInputAction,
+      controller: _bridge.proxy,
+      focusNode: widget.focusNode,
+      onChanged: _onChanged,
+      onSubmitted: widget.onSubmitted,
+      enabled: widget.enabled,
+      readOnly: widget.readOnly,
+      obscureText: widget.obscureText,
+      minLines: widget.minLines,
+      maxLines: widget.maxLines,
+      keyboardType: widget.keyboardType,
+      inputFormatters: widget.inputFormatters,
+      textInputAction: widget.textInputAction,
       style: UiTextRole.body.resolve(context),
-      placeholder: placeholder == null ? null : Text(placeholder!),
+      placeholder: widget.placeholder == null
+          ? null
+          : Text(widget.placeholder!),
       features: const [],
     ),
   );

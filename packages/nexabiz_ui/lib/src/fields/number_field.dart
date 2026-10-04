@@ -4,6 +4,7 @@ import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 
 import '../foundation/typography.dart';
 import 'field_shell.dart';
+import 'text_controller_bridge.dart';
 
 /// A generic numeric input field with canonical [UiFieldShell] presentation.
 ///
@@ -12,7 +13,7 @@ import 'field_shell.dart';
 /// accounting rounding, or domain precision.
 ///
 /// The caller owns [controller] (if provided) and numeric state callbacks.
-class UiNumberField extends StatelessWidget {
+class UiNumberField extends StatefulWidget {
   const UiNumberField({
     super.key,
     required this.label,
@@ -67,42 +68,108 @@ class UiNumberField extends StatelessWidget {
   }
 
   @override
+  State<UiNumberField> createState() => _UiNumberFieldState();
+}
+
+class _UiNumberFieldState extends State<UiNumberField> {
+  TextEditingController? _localController;
+  FieldTextControllerBridge? _externalBridge;
+  bool _syncingValue = false;
+  String? _lastNotifiedText;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.controller == null) {
+      _localController = TextEditingController(text: widget.value?.toString());
+    } else {
+      _externalBridge = FieldTextControllerBridge(widget.controller!);
+    }
+    _lastNotifiedText = widget.controller?.text ?? _localController?.text;
+  }
+
+  @override
+  void didUpdateWidget(UiNumberField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      // A bridge sync can notify the upstream field immediately. Mark the
+      // incoming value as parent-owned before replacing its source.
+      _lastNotifiedText =
+          widget.controller?.text ?? widget.value?.toString() ?? '';
+      if (widget.controller == null) {
+        _externalBridge?.dispose();
+        _externalBridge = null;
+        _localController = TextEditingController(
+          text: widget.value?.toString(),
+        );
+      } else {
+        _localController?.dispose();
+        _localController = null;
+        if (_externalBridge == null) {
+          _externalBridge = FieldTextControllerBridge(widget.controller!);
+        } else {
+          _externalBridge!.replaceSource(widget.controller!);
+        }
+      }
+    } else if (widget.controller == null && oldWidget.value != widget.value) {
+      final next = widget.value?.toString() ?? '';
+      if (_localController!.text != next) {
+        _syncingValue = true;
+        _localController!.value = TextEditingValue(
+          text: next,
+          selection: TextSelection.collapsed(offset: next.length),
+        );
+        _syncingValue = false;
+      }
+      _lastNotifiedText = next;
+    }
+  }
+
+  @override
+  void dispose() {
+    _externalBridge?.dispose();
+    _localController?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final pattern = allowDecimals
-        ? (allowNegative ? r'^-?\d*\.?\d*' : r'^\d*\.?\d*')
-        : (allowNegative ? r'^-?\d*' : r'^\d*');
+    final pattern = widget.allowDecimals
+        ? (widget.allowNegative ? r'^-?\d*\.?\d*' : r'^\d*\.?\d*')
+        : (widget.allowNegative ? r'^-?\d*' : r'^\d*');
 
     return UiFieldShell(
-      label: label,
-      requiredIndicator: requiredIndicator,
-      description: description,
-      helper: helper,
-      error: error,
-      enabled: enabled,
-      readOnly: readOnly,
+      label: widget.label,
+      requiredIndicator: widget.requiredIndicator,
+      description: widget.description,
+      helper: widget.helper,
+      error: widget.error,
+      enabled: widget.enabled,
+      readOnly: widget.readOnly,
       control: shadcn.TextField(
-        controller: controller,
-        initialValue: controller == null && value != null
-            ? value.toString()
-            : null,
-        focusNode: focusNode,
-        enabled: enabled,
-        readOnly: readOnly,
+        controller: _externalBridge?.proxy ?? _localController,
+        focusNode: widget.focusNode,
+        enabled: widget.enabled,
+        readOnly: widget.readOnly,
         keyboardType: TextInputType.numberWithOptions(
-          decimal: allowDecimals,
-          signed: allowNegative,
+          decimal: widget.allowDecimals,
+          signed: widget.allowNegative,
         ),
         inputFormatters: [FilteringTextInputFormatter.allow(RegExp(pattern))],
-        textInputAction: textInputAction,
+        textInputAction: widget.textInputAction,
         style: UiTextRole.body.resolve(context),
-        placeholder: placeholder == null ? null : Text(placeholder!),
+        placeholder: widget.placeholder == null
+            ? null
+            : Text(widget.placeholder!),
         onChanged: (text) {
-          onChanged?.call(text);
-          if (onNumberChanged != null) {
-            onNumberChanged!(parseNumeric(text));
+          if (_syncingValue || text == _lastNotifiedText) return;
+          _lastNotifiedText = text;
+          widget.onChanged?.call(text);
+          if (widget.onNumberChanged != null) {
+            widget.onNumberChanged!(UiNumberField.parseNumeric(text));
           }
         },
-        onSubmitted: onSubmitted,
+        onSubmitted: widget.onSubmitted,
         features: const [],
       ),
     );

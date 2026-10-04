@@ -4,6 +4,7 @@ import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 
 import '../foundation/typography.dart';
 import 'field_shell.dart';
+import 'text_controller_bridge.dart';
 
 /// A generic local autocomplete field using canonical [UiFieldShell] presentation.
 ///
@@ -51,9 +52,14 @@ class UiAutocompleteField extends StatefulWidget {
 }
 
 class _UiAutocompleteFieldState extends State<UiAutocompleteField> {
+  late final FieldTextControllerBridge _bridge;
+  late String _lastNotifiedText;
+
   @override
   void initState() {
     super.initState();
+    _bridge = FieldTextControllerBridge(widget.controller);
+    _lastNotifiedText = widget.controller.text;
     widget.controller.addListener(_onControllerChanged);
   }
 
@@ -63,12 +69,15 @@ class _UiAutocompleteFieldState extends State<UiAutocompleteField> {
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller.removeListener(_onControllerChanged);
       widget.controller.addListener(_onControllerChanged);
+      _lastNotifiedText = widget.controller.text;
+      _bridge.replaceSource(widget.controller);
     }
   }
 
   @override
   void dispose() {
     widget.controller.removeListener(_onControllerChanged);
+    _bridge.dispose();
     super.dispose();
   }
 
@@ -76,6 +85,12 @@ class _UiAutocompleteFieldState extends State<UiAutocompleteField> {
     if (mounted) {
       setState(() {});
     }
+  }
+
+  void _onChanged(String text) {
+    if (_lastNotifiedText == text) return;
+    _lastNotifiedText = text;
+    widget.onChanged?.call(text);
   }
 
   List<String> _getFilteredSuggestions(String query) {
@@ -109,7 +124,7 @@ class _UiAutocompleteFieldState extends State<UiAutocompleteField> {
           return suggestion;
         },
         child: shadcn.TextField(
-          controller: widget.controller,
+          controller: _bridge.proxy,
           focusNode: widget.focusNode,
           enabled: widget.enabled,
           readOnly: widget.readOnly,
@@ -118,7 +133,7 @@ class _UiAutocompleteFieldState extends State<UiAutocompleteField> {
           placeholder: widget.placeholder == null
               ? null
               : Text(widget.placeholder!),
-          onChanged: widget.onChanged,
+          onChanged: _onChanged,
           onSubmitted: widget.onSubmitted,
           features: const [],
         ),
