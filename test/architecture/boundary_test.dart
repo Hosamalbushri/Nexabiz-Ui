@@ -32,6 +32,69 @@ Set<String> productionDependencies(File file) {
 }
 
 void main() {
+  test(
+    'G18 Step 04 public choice contracts stay independent and localized',
+    () {
+      final sources =
+          [
+                'checkbox_field.dart',
+                'switch_field.dart',
+                'radio_group_field.dart',
+                'slider_field.dart',
+              ]
+              .map(
+                (name) => File(
+                  '${package.path}/lib/src/fields/$name',
+                ).readAsStringSync(),
+              )
+              .toList();
+      for (final source in sources) {
+        expect(source, contains('this.semanticLabel'));
+        expect(source, isNot(contains('package:shadcn_flutter/src/')));
+      }
+      expect(sources[3], contains('this.semanticValue'));
+      expect(sources[2], contains('required this.options'));
+      expect(sources[3], contains('this.requiredIndicator = false'));
+    },
+  );
+
+  test('G17 Step 03 accessibility contracts stay caller-owned', () {
+    final chip = File(
+      '${package.path}/lib/src/display/chip.dart',
+    ).readAsStringSync();
+    final divider = File(
+      '${package.path}/lib/src/display/divider.dart',
+    ).readAsStringSync();
+    final avatar = File(
+      '${package.path}/lib/src/display/avatar.dart',
+    ).readAsStringSync();
+    final tooltip = File(
+      '${package.path}/lib/src/display/tooltip.dart',
+    ).readAsStringSync();
+    expect(chip, contains('this.deleteSemanticLabel'));
+    expect(divider, contains('this.semanticLabel'));
+    expect(avatar, contains('this.semanticLabel'));
+    expect(tooltip, contains('required this.message'));
+    expect(tooltip, isNot(contains('package:shadcn_flutter/src/')));
+  });
+
+  test(
+    'G16 approved action accessibility parameters remain on every public constructor',
+    () {
+      final button = File(
+        '${package.path}/lib/src/actions/button.dart',
+      ).readAsStringSync();
+      final spinner = File(
+        '${package.path}/lib/src/feedback/spinner.dart',
+      ).readAsStringSync();
+      expect(
+        RegExp(r'this\.loadingSemanticLabel,').allMatches(button),
+        hasLength(4),
+      );
+      expect(spinner, contains('this.semanticLabel'));
+    },
+  );
+
   test('G1 production imports remain inside generic foundation', () {
     final violations = <String>[];
     final lib = Directory('${package.path}/lib').absolute.path;
@@ -97,9 +160,22 @@ void main() {
       "export 'src/fields/autocomplete_field.dart' show UiAutocompleteField;",
       "export 'src/fields/date_field.dart' show UiDateField;",
       "export 'src/fields/date_range_field.dart' show UiDateRangeField;",
+      "export 'src/fields/checkbox_field.dart' show UiCheckbox, UiCheckboxField;",
+      "export 'src/fields/switch_field.dart' show UiSwitch, UiSwitchField;",
+      "export 'src/fields/radio_group_field.dart' show UiRadioOption, UiRadioGroup, UiRadioGroupField;",
+      "export 'src/fields/slider_field.dart' show UiSlider, UiSliderField;",
       "export 'src/forms/form_layout.dart' show UiFormLayout;",
       "export 'src/forms/form_span.dart' show UiFormSpan, UiFormSpanType;",
       "export 'src/interaction/confirmation_dialog.dart' show showUiConfirmationDialog;",
+      "export 'src/actions/button.dart' show UiButton, UiButtonVariant, UiButtonSize;",
+      "export 'src/actions/icon_button.dart' show UiIconButton;",
+      "export 'src/feedback/spinner.dart' show UiSpinner;",
+      "export 'src/display/card.dart' show UiCard;",
+      "export 'src/display/badge.dart' show UiBadge, UiBadgeVariant;",
+      "export 'src/display/chip.dart' show UiChip;",
+      "export 'src/display/divider.dart' show UiDivider, UiDividerOrientation;",
+      "export 'src/display/avatar.dart' show UiAvatar, UiAvatarSize;",
+      "export 'src/display/tooltip.dart' show UiTooltip;",
     };
     final text = File('${package.path}/lib/nexabiz_ui.dart').readAsStringSync();
     final actual = RegExp(r'export\s+[^;]+;')

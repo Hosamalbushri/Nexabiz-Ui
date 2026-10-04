@@ -61,6 +61,8 @@ class _WorkbenchScreenState extends State<WorkbenchScreen> {
   bool _narrow = true;
   bool _arabic = false;
   bool _submitted = false;
+  int _actionCount = 0;
+  int _chipActions = 0;
   double _scale = 1;
   String _activeTab =
       'fields'; // 'composition-lab', 'interaction-lab', 'form-lab', 'fields', 'composition', 'empty', 'error'
@@ -76,6 +78,7 @@ class _WorkbenchScreenState extends State<WorkbenchScreen> {
   bool _agreeTerms = false;
   bool _notifications = true;
   int _radioValue = 1;
+  double _sliderValue = 0.5;
 
   @override
   void dispose() {
@@ -118,8 +121,47 @@ class _WorkbenchScreenState extends State<WorkbenchScreen> {
                       style: UiTextRole.heading.resolve(context),
                     ),
                     const SizedBox(height: UiTokens.contentGap),
+                    if (_activeTab == 'actions')
+                      UiActionGroup(
+                        children: [
+                          UiButton(
+                            label: _arabic ? 'حفظ' : 'Save',
+                            loadingSemanticLabel: _arabic
+                                ? 'جارٍ الحفظ'
+                                : 'Saving',
+                            onPressed: () => setState(() => _actionCount++),
+                          ),
+                          UiButton.outline(
+                            label: _arabic ? 'معاينة' : 'Preview',
+                            onPressed: () => setState(() => _actionCount++),
+                          ),
+                          UiIconButton(
+                            icon: const Icon(
+                              IconData(0xe145, fontFamily: 'MaterialIcons'),
+                            ),
+                            semanticLabel: _arabic ? 'إضافة' : 'Add',
+                            tooltip: _arabic ? 'إضافة سجل' : 'Add record',
+                            onPressed: () => setState(() => _actionCount++),
+                          ),
+                          UiSpinner(
+                            semanticLabel: _arabic ? 'جارٍ التحميل' : 'Loading',
+                          ),
+                          Text('$_actionCount'),
+                        ],
+                      ),
+                    const SizedBox(height: UiTokens.contentGap),
                     UiActionGroup(
                       children: [
+                        _control(
+                          'tab-actions',
+                          _arabic ? 'عناصر الإجراءات' : 'Action Controls',
+                          () => setState(() => _activeTab = 'actions'),
+                        ),
+                        _control(
+                          'tab-visuals',
+                          _arabic ? 'العناصر المرئية' : 'Visual Components',
+                          () => setState(() => _activeTab = 'visuals'),
+                        ),
                         _control(
                           'theme',
                           widget.dark ? 'Dark theme' : 'Light theme',
@@ -225,6 +267,8 @@ class _WorkbenchScreenState extends State<WorkbenchScreen> {
                                 _buildFormLabSection(context),
                               if (_activeTab == 'fields')
                                 _buildFieldsSection(context),
+                              if (_activeTab == 'visuals')
+                                _buildVisualSection(context),
                               if (_activeTab == 'composition')
                                 _buildCompositionSection(context),
                               if (_activeTab == 'empty')
@@ -375,8 +419,8 @@ class _WorkbenchScreenState extends State<WorkbenchScreen> {
             ? 'نموذج متوسط: بيانات المستخدم والتفضيلات'
             : 'Medium Form: User Profile & Controls',
         description: _arabic
-            ? 'عرض دمج مكونات shadcn المباشرة وحقول الإدخال المخصصة.'
-            : 'Demonstrating UiFields, direct shadcn controls, and UiFormSpan.',
+            ? 'عرض حقول الإدخال وعناصر الاختيار المتكاملة.'
+            : 'Demonstrating form fields, choice controls, and UiFormSpan.',
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -412,45 +456,40 @@ class _WorkbenchScreenState extends State<WorkbenchScreen> {
                     maxLines: 4,
                   ),
                 ),
-                shadcn.Checkbox(
-                  state: _agreeTerms
-                      ? shadcn.CheckboxState.checked
-                      : shadcn.CheckboxState.unchecked,
-                  onChanged: (st) => setState(
-                    () => _agreeTerms = st == shadcn.CheckboxState.checked,
-                  ),
-                  trailing: Text(
-                    _arabic ? 'الموافقة على الشروط' : 'Agree to Terms',
-                  ),
+                UiCheckboxField(
+                  label: _arabic ? 'الموافقة على الشروط' : 'Agree to Terms',
+                  value: _agreeTerms,
+                  onChanged: (next) =>
+                      setState(() => _agreeTerms = next ?? false),
                 ),
-                shadcn.Switch(
+                UiSwitchField(
+                  label: _arabic
+                      ? 'تفعيل الإشعارات'
+                      : 'Enable System Notifications',
                   value: _notifications,
                   onChanged: (v) => setState(() => _notifications = v),
-                  trailing: Text(
-                    _arabic ? 'تفعيل الإشعارات' : 'Enable System Notifications',
-                  ),
                 ),
-                UiFieldShell(
+                UiRadioGroupField<int>(
                   label: _arabic ? 'تقييم الأداء' : 'Custom Rating Control',
-                  control: shadcn.RadioGroup<int>(
-                    value: _radioValue,
-                    onChanged: (v) => setState(() => _radioValue = v),
-                    child: Wrap(
-                      spacing: UiTokens.contentGap,
-                      runSpacing: 8,
-                      children: [
-                        for (int i = 1; i <= 3; i++)
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              shadcn.Radio(value: _radioValue == i),
-                              const SizedBox(width: 4),
-                              Text('Priority $i'),
-                            ],
-                          ),
-                      ],
-                    ),
-                  ),
+                  options: [
+                    for (int i = 1; i <= 3; i++)
+                      UiRadioOption(
+                        value: i,
+                        label: _arabic ? 'الأولوية $i' : 'Priority $i',
+                      ),
+                  ],
+                  value: _radioValue,
+                  onChanged: (v) => setState(() => _radioValue = v),
+                ),
+                UiSliderField(
+                  label: _arabic ? 'النسبة' : 'Percentage',
+                  value: _sliderValue,
+                  divisions: 10,
+                  semanticValue: _arabic
+                      ? '${(_sliderValue * 100).round()} بالمئة'
+                      : '${(_sliderValue * 100).round()} percent',
+                  valueLabel: '${(_sliderValue * 100).round()}%',
+                  onChanged: (v) => setState(() => _sliderValue = v),
                 ),
               ],
             ),
@@ -711,8 +750,11 @@ class _WorkbenchScreenState extends State<WorkbenchScreen> {
                         : 'Enable Push Notifications',
                     style: UiTextRole.body.resolve(context),
                   ),
-                  shadcn.Switch(
+                  UiSwitch(
                     value: _notifications,
+                    semanticLabel: _arabic
+                        ? 'تفعيل الإشعارات الفورية'
+                        : 'Enable Push Notifications',
                     onChanged: (val) => setState(() => _notifications = val),
                   ),
                 ],
@@ -781,6 +823,47 @@ class _WorkbenchScreenState extends State<WorkbenchScreen> {
         ),
       ),
     ],
+  );
+
+  Widget _buildVisualSection(BuildContext context) => UiCard(
+    title: _arabic ? 'ملخص السجل' : 'Record summary',
+    description: _arabic ? 'مثال للعناصر المرئية' : 'Visual component examples',
+    actions: UiBadge(
+      label: _arabic ? 'نشط' : 'Active',
+      variant: UiBadgeVariant.secondary,
+    ),
+    footer: Text(
+      _arabic ? 'إجراءات الوسم: $_chipActions' : 'Chip actions: $_chipActions',
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            UiAvatar(name: _arabic ? 'محمد علي' : 'Jane Doe'),
+            const SizedBox(width: UiTokens.fieldGap),
+            Expanded(child: Text(_arabic ? 'محمد علي' : 'Jane Doe')),
+          ],
+        ),
+        const SizedBox(height: UiTokens.fieldGap),
+        const UiDivider(),
+        const SizedBox(height: UiTokens.fieldGap),
+        UiChip(
+          label: Text(_arabic ? 'مرشح' : 'Filter'),
+          deleteSemanticLabel: _arabic ? 'إزالة المرشح' : 'Remove filter',
+          onPressed: () => setState(() => _chipActions++),
+          onDeleted: () => setState(() => _chipActions++),
+        ),
+        const SizedBox(height: UiTokens.fieldGap),
+        UiTooltip(
+          message: _arabic ? 'تفاصيل السجل' : 'Record details',
+          child: UiButton.ghost(
+            label: _arabic ? 'مساعدة' : 'Help',
+            onPressed: () {},
+          ),
+        ),
+      ],
+    ),
   );
 
   Widget _buildCompositionSection(BuildContext context) => UiSection(

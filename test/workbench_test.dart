@@ -4,6 +4,49 @@ import 'package:nexabiz_ui/nexabiz_ui.dart';
 import 'package:nexabiz_ui_foundation/main.dart';
 
 void main() {
+  testWidgets('form showcase uses public Step 04 choice controls', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const FoundationWorkbench());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('tab-form-lab')));
+    await tester.pumpAndSettle();
+    expect(find.byType(UiCheckboxField), findsOneWidget);
+    expect(find.byType(UiSwitchField), findsOneWidget);
+    expect(find.byType(UiRadioGroupField<int>), findsOneWidget);
+    expect(find.byType(UiSliderField), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('visual showcase uses six public NexaBiz components', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const FoundationWorkbench());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('tab-visuals')));
+    await tester.pumpAndSettle();
+    expect(find.byType(UiCard), findsOneWidget);
+    expect(find.byType(UiBadge), findsOneWidget);
+    expect(find.byType(UiChip), findsOneWidget);
+    expect(find.byType(UiDivider), findsOneWidget);
+    expect(find.byType(UiAvatar), findsOneWidget);
+    expect(find.byType(UiTooltip), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('action showcase uses NexaBiz controls and app-supplied labels', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const FoundationWorkbench());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('tab-actions')));
+    await tester.pump();
+    expect(find.byType(UiButton), findsNWidgets(2));
+    expect(find.byType(UiIconButton), findsOneWidget);
+    expect(find.byType(UiSpinner), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'Workbench remains usable on a 320 pixel viewport at 200 percent',
     (tester) async {
