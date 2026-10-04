@@ -10,7 +10,7 @@
 | `ControlledMultiSelect` | Generic multi-selection dropdown widget using `SelectValueBuilder<T>`. | `UiMultiSelectField<T>` composes `ControlledMultiSelect<T>` with content-driven chip layout. |
 | `AutoComplete` | Popover wrapper for text field with suggestion completion. | `UiAutocompleteField` composes `AutoComplete` around `UiTextField` with `UiFieldShell` chrome. |
 | `DatePicker` / `ControlledDatePicker` | Date selection trigger and calendar popover. | `UiDateField` composes date selection with standard Dart `DateTime?`. |
-| `DateRangePicker` | Range selection trigger and calendar popover. | `UiDateRangeField` composes date range selection with standard Dart `DateTimeRange?`. |
+| `DateRangePicker` | Range selection trigger and calendar popover. | `UiDateRangeField` now exposes Flutter `DateTimeRange?` and adapts to shadcn internally (Phase 01 Step 05). |
 
 ---
 
@@ -24,7 +24,7 @@
 | `UiMultiSelectField<T>` | `IMPLEMENT` | Canonical multi-selection field with scalable chip rendering. | Solves multi-item selection display across 320/420/960 width hosts and TextScaler 2.0. |
 | `UiAutocompleteField` | `IMPLEMENT` | Canonical local synchronous autocomplete field. | Local suggestion popover with canonical `UiFieldShell` chrome. |
 | `UiDateField` | `IMPLEMENT` | Canonical date selection field. | Date selection using standard Dart `DateTime?`. |
-| `UiDateRangeField` | `IMPLEMENT` | Canonical date range selection field. | Date range selection using standard Dart `DateTimeRange?`. |
+| `UiDateRangeField` | `IMPLEMENT` | Canonical date range selection field. | Date range selection using Flutter `DateTimeRange?` after Phase 01 Step 05. |
 
 ---
 

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart' show DateTimeRange;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nexabiz_ui/nexabiz_ui.dart';
@@ -57,9 +58,9 @@ void main() {
     testWidgets(
       'UiDateRangeField renders label, placeholder, and DateTimeRange value',
       (tester) async {
-        final selectedRange = shadcn.DateTimeRange(
-          DateTime(2026, 9, 1),
-          DateTime(2026, 9, 30),
+        final selectedRange = DateTimeRange(
+          start: DateTime(2026, 9, 1),
+          end: DateTime(2026, 9, 30),
         );
 
         await tester.pumpWidget(
@@ -76,9 +77,9 @@ void main() {
       'UiDateField & UiDateRangeField handle LTR/RTL and TextScaler 2.0',
       (tester) async {
         final selectedDate = DateTime(2026, 9, 26);
-        final selectedRange = shadcn.DateTimeRange(
-          DateTime(2026, 9, 1),
-          DateTime(2026, 9, 30),
+        final selectedRange = DateTimeRange(
+          start: DateTime(2026, 9, 1),
+          end: DateTime(2026, 9, 30),
         );
 
         for (final dir in TextDirection.values) {

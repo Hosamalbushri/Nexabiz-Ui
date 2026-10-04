@@ -171,7 +171,19 @@ void main() {
     final violations = <String>[];
     for (final file in dartFiles(Directory('${package.path}/lib'))) {
       final source = file.readAsStringSync();
-      if (source.contains('package:flutter/material.dart') ||
+      final materialLines = source
+          .split('\n')
+          .where((line) => line.contains('package:flutter/material.dart'));
+      final allowedRangeImport = file.path.endsWith(
+        '/lib/src/fields/date_range_field.dart',
+      );
+      final forbiddenMaterial = materialLines.any(
+        (line) =>
+            !allowedRangeImport ||
+            line.trim() !=
+                "import 'package:flutter/material.dart' show DateTimeRange;",
+      );
+      if (forbiddenMaterial ||
           source.contains('FittedBox(') ||
           source.contains('MediaQuery.sizeOf') ||
           source.contains('MediaQuery.of(context).size')) {
@@ -182,6 +194,49 @@ void main() {
       violations,
       isEmpty,
       reason: 'G7 competing visual authority or viewport/text scaling bypass',
+    );
+  });
+
+  test('G15 exported contracts do not expose upstream shadcn types', () {
+    final barrel = File(
+      '${package.path}/lib/nexabiz_ui.dart',
+    ).readAsStringSync();
+    final exports = RegExp(
+      r"export '([^']+)' show ([^;]+);",
+    ).allMatches(barrel);
+    final violations = <String>[];
+    for (final export in exports) {
+      final file = File('${package.path}/lib/${export[1]}');
+      final symbols = export[2]!.split(',').map((s) => s.trim()).toSet();
+      final lines = file.readAsLinesSync();
+      var depth = 0;
+      var exportedClassDepth = -1;
+      for (var index = 0; index < lines.length; index++) {
+        final line = lines[index];
+        if (depth == 0 &&
+            symbols.any(
+              (symbol) =>
+                  RegExp('(?:class|enum|typedef) $symbol\\b').hasMatch(line),
+            )) {
+          exportedClassDepth = 1;
+        }
+        final inContract = depth == 0 || depth == exportedClassDepth;
+        if (inContract &&
+            line.contains('shadcn.') &&
+            (line.trimLeft().startsWith('typedef ') ||
+                !RegExp(r'[:=]').hasMatch(line.split('shadcn.').first)) &&
+            !line.trimLeft().startsWith('import ') &&
+            !line.trimLeft().startsWith('//')) {
+          violations.add('${file.path}:${index + 1}: ${line.trim()}');
+        }
+        depth += '{'.allMatches(line).length - '}'.allMatches(line).length;
+        if (depth == 0) exportedClassDepth = -1;
+      }
+    }
+    expect(
+      violations,
+      isEmpty,
+      reason: 'G15 exported declarations must use independent types',
     );
   });
 

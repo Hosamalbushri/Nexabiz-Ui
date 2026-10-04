@@ -70,5 +70,6 @@ Single date selection field.
 
 ### `UiDateRangeField`
 Date range selection field.
-- **Types**: Standard Dart `DateTimeRange?`.
+- **Types**: Flutter `DateTimeRange?` from `package:flutter/material.dart` (show-only import is sufficient). The caller owns the value; `null` clears it.
+- **Migration**: Replace `shadcn.DateTimeRange(start, end)` with `DateTimeRange(start: start, end: end)` and change callback annotations to `DateTimeRange?`. Flutter requires `start <= end`; the field does not reorder endpoints or truncate time components.
 - **Presentation**: Formatted date-range selector with calendar popover.

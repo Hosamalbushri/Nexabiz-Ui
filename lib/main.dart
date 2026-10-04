@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart' show DateTimeRange;
 import 'package:flutter/widgets.dart';
 import 'package:nexabiz_ui/nexabiz_ui.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
@@ -67,9 +68,9 @@ class _WorkbenchScreenState extends State<WorkbenchScreen> {
   String? _selectedCategory = 'Electronics';
   List<String> _selectedTags = ['Urgent', 'Review'];
   DateTime? _selectedDate = DateTime(2026, 9, 26);
-  shadcn.DateTimeRange? _selectedDateRange = shadcn.DateTimeRange(
-    DateTime(2026, 9, 1),
-    DateTime(2026, 9, 30),
+  DateTimeRange? _selectedDateRange = DateTimeRange(
+    start: DateTime(2026, 9, 1),
+    end: DateTime(2026, 9, 30),
   );
 
   bool _agreeTerms = false;

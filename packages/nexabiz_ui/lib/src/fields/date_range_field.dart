@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart' show DateTimeRange;
 import 'package:flutter/widgets.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart' as shadcn;
 
@@ -7,7 +8,7 @@ import 'field_shell.dart';
 /// A generic date range selection field using canonical [UiFieldShell] presentation.
 ///
 /// Composes `shadcn.DateRangePicker` with accessible field chrome and placeholder,
-/// using standard Dart [DateTimeRange] values.
+/// using Flutter [DateTimeRange] values.
 class UiDateRangeField extends StatelessWidget {
   const UiDateRangeField({
     super.key,
@@ -24,8 +25,8 @@ class UiDateRangeField extends StatelessWidget {
   });
 
   final String label;
-  final shadcn.DateTimeRange? value;
-  final ValueChanged<shadcn.DateTimeRange?>? onChanged;
+  final DateTimeRange? value;
+  final ValueChanged<DateTimeRange?>? onChanged;
   final String? requiredIndicator;
   final String? description;
   final String? helper;
@@ -45,8 +46,16 @@ class UiDateRangeField extends StatelessWidget {
       enabled: enabled,
       readOnly: readOnly,
       control: shadcn.DateRangePicker(
-        value: value,
-        onChanged: readOnly ? null : onChanged,
+        value: value == null
+            ? null
+            : shadcn.DateTimeRange(value!.start, value!.end),
+        onChanged: enabled && !readOnly && onChanged != null
+            ? (range) => onChanged!(
+                range == null
+                    ? null
+                    : DateTimeRange(start: range.start, end: range.end),
+              )
+            : null,
         placeholder: placeholder == null
             ? null
             : Text(

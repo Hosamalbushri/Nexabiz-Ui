@@ -63,7 +63,7 @@ All 9 mandatory architecture guards are explicitly implemented, automated, and p
 - **Dataset Scaling**: Filtered datasets with 1,000 items synchronously without frame drop or memory leakage.
 
 ### D. Date Models & Temporal Inputs (`UiDateField` & `UiDateRangeField`)
-- **Model Cleanliness**: Consumes clean `DateTime?` and `DateTimeRange?` without domain wrappers or custom date engines.
+- **Model Cleanliness**: Consumes Dart `DateTime?` and, after Phase 01 Step 05, Flutter `DateTimeRange?` without domain wrappers or custom date engines.
 - **Scale & Direction**: Tested under TextScaler 2.0 and RTL directionality with full semantic contrast.
 
 ---
