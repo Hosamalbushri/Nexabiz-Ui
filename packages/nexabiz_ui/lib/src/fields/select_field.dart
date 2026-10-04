@@ -8,7 +8,7 @@ import 'field_shell.dart';
 ///
 /// Composes `shadcn.ControlledSelect<T>` with accessible field chrome, placeholder,
 /// item text/widget rendering, and optional unselection support.
-class UiSelectField<T> extends StatelessWidget {
+class UiSelectField<T> extends StatefulWidget {
   const UiSelectField({
     super.key,
     required this.label,
@@ -44,16 +44,43 @@ class UiSelectField<T> extends StatelessWidget {
   final bool enabled;
   final bool readOnly;
 
+  @override
+  State<UiSelectField<T>> createState() => _UiSelectFieldState<T>();
+}
+
+class _UiSelectFieldState<T> extends State<UiSelectField<T>> {
+  late final shadcn.SelectController<T> _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = shadcn.SelectController<T>(widget.value);
+  }
+
+  @override
+  void didUpdateWidget(UiSelectField<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      _controller.value = widget.value;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   String _getItemLabel(T item) {
-    if (itemLabelBuilder != null) {
-      return itemLabelBuilder!(item);
+    if (widget.itemLabelBuilder != null) {
+      return widget.itemLabelBuilder!(item);
     }
     return item.toString();
   }
 
   Widget _buildItemContent(BuildContext context, T item) {
-    if (itemBuilder != null) {
-      return itemBuilder!(context, item);
+    if (widget.itemBuilder != null) {
+      return widget.itemBuilder!(context, item);
     }
     return Text(_getItemLabel(item), style: UiTextRole.body.resolve(context));
   }
@@ -61,23 +88,23 @@ class UiSelectField<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return UiFieldShell(
-      label: label,
-      requiredIndicator: requiredIndicator,
-      description: description,
-      helper: helper,
-      error: error,
-      enabled: enabled,
-      readOnly: readOnly,
+      label: widget.label,
+      requiredIndicator: widget.requiredIndicator,
+      description: widget.description,
+      helper: widget.helper,
+      error: widget.error,
+      enabled: widget.enabled,
+      readOnly: widget.readOnly,
       control: shadcn.ControlledSelect<T>(
-        initialValue: value,
-        onChanged: readOnly ? null : onChanged,
-        enabled: enabled && !readOnly,
-        focusNode: focusNode,
-        canUnselect: canUnselect,
-        placeholder: placeholder == null
+        controller: _controller,
+        onChanged: widget.readOnly ? null : widget.onChanged,
+        enabled: widget.enabled && !widget.readOnly,
+        focusNode: widget.focusNode,
+        canUnselect: widget.canUnselect,
+        placeholder: widget.placeholder == null
             ? null
             : Text(
-                placeholder!,
+                widget.placeholder!,
                 style: UiTextRole.body
                     .resolve(context)
                     .copyWith(
@@ -86,15 +113,17 @@ class UiSelectField<T> extends StatelessWidget {
                       ).colorScheme.mutedForeground,
                     ),
               ),
-        popup: (popupContext) => shadcn.SelectGroup(
-          children: items
-              .map(
-                (item) => shadcn.SelectItemButton<T>(
-                  value: item,
-                  child: _buildItemContent(popupContext, item),
-                ),
-              )
-              .toList(),
+        popup: (_) => shadcn.SelectPopup<T>(
+          items: shadcn.SelectItemBuilder(
+            childCount: widget.items.length,
+            builder: (itemContext, index) {
+              final item = widget.items[index];
+              return shadcn.SelectItemButton<T>(
+                value: item,
+                child: _buildItemContent(itemContext, item),
+              );
+            },
+          ),
         ),
         itemBuilder: (builderContext, selectedValue) =>
             _buildItemContent(builderContext, selectedValue),

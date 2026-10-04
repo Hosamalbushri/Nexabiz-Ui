@@ -8,7 +8,7 @@ import 'field_shell.dart';
 ///
 /// Composes `shadcn.ControlledDatePicker` with accessible field chrome and placeholder,
 /// using standard Dart [DateTime] values. Does not impose business/timezone rules.
-class UiDateField extends StatelessWidget {
+class UiDateField extends StatefulWidget {
   const UiDateField({
     super.key,
     required this.label,
@@ -35,23 +35,50 @@ class UiDateField extends StatelessWidget {
   final bool readOnly;
 
   @override
+  State<UiDateField> createState() => _UiDateFieldState();
+}
+
+class _UiDateFieldState extends State<UiDateField> {
+  late final shadcn.DatePickerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = shadcn.DatePickerController(widget.value);
+  }
+
+  @override
+  void didUpdateWidget(UiDateField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      _controller.value = widget.value;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return UiFieldShell(
-      label: label,
-      requiredIndicator: requiredIndicator,
-      description: description,
-      helper: helper,
-      error: error,
-      enabled: enabled,
-      readOnly: readOnly,
+      label: widget.label,
+      requiredIndicator: widget.requiredIndicator,
+      description: widget.description,
+      helper: widget.helper,
+      error: widget.error,
+      enabled: widget.enabled,
+      readOnly: widget.readOnly,
       control: shadcn.ControlledDatePicker(
-        initialValue: value,
-        onChanged: readOnly ? null : onChanged,
-        enabled: enabled && !readOnly,
-        placeholder: placeholder == null
+        controller: _controller,
+        onChanged: widget.readOnly ? null : widget.onChanged,
+        enabled: widget.enabled && !widget.readOnly,
+        placeholder: widget.placeholder == null
             ? null
             : Text(
-                placeholder!,
+                widget.placeholder!,
                 style: UiTextRole.body
                     .resolve(context)
                     .copyWith(

@@ -9,7 +9,7 @@ import 'field_shell.dart';
 /// Composes `shadcn.ControlledMultiSelect<T>` with accessible field chrome, placeholder,
 /// and content-driven [Wrap] rendering for selected items to support scalable layouts
 /// across narrow widths (320/420/960px) and large text scales (up to 200%).
-class UiMultiSelectField<T> extends StatelessWidget {
+class UiMultiSelectField<T> extends StatefulWidget {
   const UiMultiSelectField({
     super.key,
     required this.label,
@@ -43,16 +43,56 @@ class UiMultiSelectField<T> extends StatelessWidget {
   final bool enabled;
   final bool readOnly;
 
+  @override
+  State<UiMultiSelectField<T>> createState() => _UiMultiSelectFieldState<T>();
+}
+
+class _UiMultiSelectFieldState<T> extends State<UiMultiSelectField<T>> {
+  late final shadcn.MultiSelectController<T> _controller;
+  List<T>? _lastValue;
+
+  @override
+  void initState() {
+    super.initState();
+    _lastValue = widget.value == null ? null : List<T>.of(widget.value!);
+    _controller = shadcn.MultiSelectController<T>(_lastValue);
+  }
+
+  @override
+  void didUpdateWidget(UiMultiSelectField<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final next = widget.value;
+    if (!_sameValues(_lastValue, next)) {
+      _lastValue = next == null ? null : List<T>.of(next);
+      _controller.value = _lastValue;
+    }
+  }
+
+  bool _sameValues(List<T>? a, List<T>? b) {
+    if (a == null || b == null) return a == null && b == null;
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   String _getItemLabel(T item) {
-    if (itemLabelBuilder != null) {
-      return itemLabelBuilder!(item);
+    if (widget.itemLabelBuilder != null) {
+      return widget.itemLabelBuilder!(item);
     }
     return item.toString();
   }
 
   Widget _buildItemContent(BuildContext context, T item) {
-    if (itemBuilder != null) {
-      return itemBuilder!(context, item);
+    if (widget.itemBuilder != null) {
+      return widget.itemBuilder!(context, item);
     }
     return Text(_getItemLabel(item), style: UiTextRole.body.resolve(context));
   }
@@ -60,26 +100,26 @@ class UiMultiSelectField<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return UiFieldShell(
-      label: label,
-      requiredIndicator: requiredIndicator,
-      description: description,
-      helper: helper,
-      error: error,
-      enabled: enabled,
-      readOnly: readOnly,
+      label: widget.label,
+      requiredIndicator: widget.requiredIndicator,
+      description: widget.description,
+      helper: widget.helper,
+      error: widget.error,
+      enabled: widget.enabled,
+      readOnly: widget.readOnly,
       control: shadcn.ControlledMultiSelect<T>(
-        initialValue: value,
-        onChanged: readOnly || onChanged == null
+        controller: _controller,
+        onChanged: widget.readOnly || widget.onChanged == null
             ? null
             : (selectedIterable) {
-                onChanged!(selectedIterable?.toList() ?? <T>[]);
+                widget.onChanged!(selectedIterable?.toList() ?? <T>[]);
               },
-        enabled: enabled && !readOnly,
-        focusNode: focusNode,
-        placeholder: placeholder == null
+        enabled: widget.enabled && !widget.readOnly,
+        focusNode: widget.focusNode,
+        placeholder: widget.placeholder == null
             ? null
             : Text(
-                placeholder!,
+                widget.placeholder!,
                 style: UiTextRole.body
                     .resolve(context)
                     .copyWith(
@@ -88,15 +128,17 @@ class UiMultiSelectField<T> extends StatelessWidget {
                       ).colorScheme.mutedForeground,
                     ),
               ),
-        popup: (popupContext) => shadcn.SelectGroup(
-          children: items
-              .map(
-                (item) => shadcn.SelectItemButton<T>(
-                  value: item,
-                  child: _buildItemContent(popupContext, item),
-                ),
-              )
-              .toList(),
+        popup: (_) => shadcn.SelectPopup<T>(
+          items: shadcn.SelectItemBuilder(
+            childCount: widget.items.length,
+            builder: (itemContext, index) {
+              final item = widget.items[index];
+              return shadcn.SelectItemButton<T>(
+                value: item,
+                child: _buildItemContent(itemContext, item),
+              );
+            },
+          ),
         ),
         itemBuilder: (builderContext, selectedItem) {
           return shadcn.Chip(
